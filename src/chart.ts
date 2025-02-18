@@ -1,60 +1,17 @@
-import { select, selectAll, Selection } from 'd3-selection';
 import {
-  scaleLinear,
-  scaleTime,
-  scaleOrdinal,
-  ScaleLinear,
-  NumberValue,
-} from 'd3-scale';
-import { axisLeft, axisBottom, Axis } from 'd3-axis';
-import { extent, max, AxisDomain } from 'd3';
+  DatasetItem,
+  ChartAxis,
+  ChartMargin,
+  ChartOptions,
+  ChartScale,
+  ChartSvg,
+  IScatterPlotChart,
+} from './types';
 
-type ChartOptions = {
-  title: string;
-  description: string;
-  width: number;
-  height: number;
-  spacing: number;
-  chartElement: HTMLElement | null;
-};
-
-type ChartMargin = {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-};
-
-type ChartSvg = Selection<SVGSVGElement, unknown, null, undefined> | null;
-type ChartScale = ScaleLinear<number, number>;
-type ChartAxis = Axis<NumberValue> | null;
-
-type DatasetItem = {
-  Time: string;
-  Place: number;
-  Seconds: number;
-  Name: string;
-  Year: number;
-  Nationality: string;
-  Doping: string;
-  URL: string;
-};
-
-interface IScatterPlotChart extends ChartOptions {
-  init: () => void;
-  createTitle: () => void;
-  createAxes: () => void;
-  getDataset: () => void;
-  getMaxTime: (times: string[]) => string;
-  margin: ChartMargin;
-  svg: ChartSvg;
-  dataUrl: string;
-  dataset: DatasetItem[];
-  xScale: ChartScale | null;
-  yScale: ChartScale | null;
-  xAxis: ChartAxis | null;
-  yAxis: ChartAxis | null;
-}
+import { select } from 'd3-selection';
+import { scaleLinear, NumberValue } from 'd3-scale';
+import { axisLeft, axisBottom } from 'd3-axis';
+import { extent } from 'd3';
 
 export class ScatterPlotChart implements IScatterPlotChart {
   title: string;
