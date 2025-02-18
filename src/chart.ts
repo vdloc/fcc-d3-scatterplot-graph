@@ -1,7 +1,13 @@
 import { select, selectAll, Selection } from 'd3-selection';
-import { scaleLinear, scaleTime, scaleOrdinal, ScaleLinear } from 'd3-scale';
-import { axisTop } from 'd3-axis';
-import { extent, max } from 'd3';
+import {
+  scaleLinear,
+  scaleTime,
+  scaleOrdinal,
+  ScaleLinear,
+  NumberValue,
+} from 'd3-scale';
+import { axisLeft, axisBottom, Axis } from 'd3-axis';
+import { extent, max, AxisDomain } from 'd3';
 
 type ChartOptions = {
   title: string;
@@ -21,6 +27,7 @@ type ChartMargin = {
 
 type ChartSvg = Selection<SVGSVGElement, unknown, null, undefined> | null;
 type ChartScale = ScaleLinear<number, number>;
+type ChartAxis = Axis<NumberValue> | null;
 
 type DatasetItem = {
   Time: string;
@@ -45,6 +52,8 @@ interface IScatterPlotChart extends ChartOptions {
   dataset: DatasetItem[];
   xScale: ChartScale | null;
   yScale: ChartScale | null;
+  xAxis: ChartAxis | null;
+  yAxis: ChartAxis | null;
 }
 
 export class ScatterPlotChart implements IScatterPlotChart {
@@ -60,6 +69,8 @@ export class ScatterPlotChart implements IScatterPlotChart {
   dataset: DatasetItem[] = [];
   xScale: ChartScale | null;
   yScale: ChartScale | null;
+  xAxis: ChartAxis | null;
+  yAxis: ChartAxis | null;
 
   constructor({
     title,
@@ -84,6 +95,8 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.svg = null;
     this.xScale = null;
     this.yScale = null;
+    this.xAxis = null;
+    this.yAxis = null;
     this.dataUrl =
       'https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/cyclist-data.json';
   }
@@ -95,6 +108,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .attr('width', this.width)
       .attr('height', this.height);
     this.createTitle();
+    this.createAxes();
   }
 
   createTitle() {
@@ -109,11 +123,42 @@ export class ScatterPlotChart implements IScatterPlotChart {
   }
 
   createAxes() {
+    const xRange = extent(this.dataset, (d: DatasetItem) => d.Year) as [
+      number,
+      number
+    ];
     this.xScale = scaleLinear()
-      .domain(
-        extent(this.dataset, (d: DatasetItem) => d.Year) as [number, number]
-      )
+      .domain([xRange[0] - 1, xRange[1]])
       .range([this.margin.left, this.width - this.margin.right]);
+    this.yScale = scaleLinear()
+      .domain(
+        extent(this.dataset, (d: DatasetItem) =>
+          this.getTimeInSeconds(d.Time)
+        ) as [number, number]
+      )
+      .range([this.margin.top, this.height - this.margin.bottom]);
+
+    this.xAxis = axisBottom(this.xScale);
+    this.yAxis = axisLeft(this.yScale).tickFormat(
+      (d: NumberValue, index: number) => {
+        const value = d as number;
+        const minutes = Math.floor(value / 60);
+        const seconds = new Intl.NumberFormat('en-US', {
+          minimumIntegerDigits: 2,
+        }).format(value & 60);
+        return `${minutes}:${seconds}`;
+      }
+    );
+    this.svg
+      ?.append('g')
+      .attr('id', 'x-axis')
+      .attr('transform', `translate(0, ${this.height - this.margin.bottom})`)
+      .call(this.xAxis);
+    this.svg
+      ?.append('g')
+      .attr('id', 'y-axis')
+      .attr('transform', `translate(${this.margin.left}, 0)`)
+      .call(this.yAxis);
   }
 
   getMaxTime(times: string[]) {
@@ -139,5 +184,10 @@ export class ScatterPlotChart implements IScatterPlotChart {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
+  }
+
+  getTimeInSeconds(time: string) {
+    const [minutes, seconds] = time.split(':').map(Number);
+    return minutes * 60 + seconds;
   }
 }
