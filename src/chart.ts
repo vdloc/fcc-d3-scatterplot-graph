@@ -8,7 +8,7 @@ import {
   IScatterPlotChart,
 } from './types';
 
-import { select } from 'd3-selection';
+import { select, selectAll } from 'd3-selection';
 import { scaleLinear, NumberValue } from 'd3-scale';
 import { axisLeft, axisBottom } from 'd3-axis';
 import { extent } from 'd3';
@@ -66,6 +66,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .attr('height', this.height);
     this.createTitle();
     this.createAxes();
+    this.createPlots();
   }
 
   createTitle() {
@@ -93,7 +94,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
           this.getTimeInSeconds(d.Time)
         ) as [number, number]
       )
-      .range([this.margin.top, this.height - this.margin.bottom]);
+      .range([this.margin.top * 1.2, this.height - this.margin.bottom]);
 
     this.xAxis = axisBottom(this.xScale);
     this.yAxis = axisLeft(this.yScale).tickFormat(
@@ -102,7 +103,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
         const minutes = Math.floor(value / 60);
         const seconds = new Intl.NumberFormat('en-US', {
           minimumIntegerDigits: 2,
-        }).format(value & 60);
+        }).format(value % 60);
         return `${minutes}:${seconds}`;
       }
     );
@@ -116,6 +117,34 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .attr('id', 'y-axis')
       .attr('transform', `translate(${this.margin.left}, 0)`)
       .call(this.yAxis);
+  }
+
+  createPlots() {
+    this.svg
+      ?.selectAll('circle')
+      .data(this.dataset)
+      .enter()
+      .append('circle')
+      .attr('cx', (d) => (this.xScale ? this.xScale(d.Year) : d.Year))
+      .attr('cy', (d) =>
+        this.yScale
+          ? this.yScale(this.getTimeInSeconds(d.Time))
+          : this.getTimeInSeconds(d.Time)
+      )
+      .attr('r', 7)
+      .attr('fill', (d) => (d.Doping ? 'steelblue' : 'orange'))
+      .attr('opacity', 0.8)
+      .attr('stroke', 'black')
+      .attr('stroke-width', 1)
+      .attr('data-xvalue', (d) => {
+        let currentDate = new Date();
+        currentDate.setFullYear(d.Year);
+        return currentDate.toString();
+      })
+      ?.attr('data-yvalue', (d) => {
+        return new Date(d.Time).getMinutes();
+      })
+      .attr('class', 'dot');
   }
 
   getMaxTime(times: string[]) {

@@ -42,6 +42,7 @@ export interface IScatterPlotChart extends ChartOptions {
   init: () => void;
   createTitle: () => void;
   createAxes: () => void;
+  createPlots: () => void;
   getDataset: () => void;
   getMaxTime: (times: string[]) => string;
   margin: ChartMargin;
