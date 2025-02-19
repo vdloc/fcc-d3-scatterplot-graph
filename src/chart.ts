@@ -120,6 +120,8 @@ export class ScatterPlotChart implements IScatterPlotChart {
   }
 
   createPlots() {
+    const tooltip = select('#tooltip');
+
     this.svg
       ?.selectAll('circle')
       .data(this.dataset)
@@ -136,15 +138,30 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .attr('opacity', 0.8)
       .attr('stroke', 'black')
       .attr('stroke-width', 1)
-      .attr('data-xvalue', (d) => {
-        let currentDate = new Date();
-        currentDate.setFullYear(d.Year);
-        return currentDate.toString();
-      })
+      .attr('data-xvalue', (d) => d.Year)
       ?.attr('data-yvalue', (d) => {
         return new Date(d.Time).getMinutes();
       })
-      .attr('class', 'dot');
+      .attr('class', 'dot')
+      .on('mouseenter', (event: MouseEvent, d: DatasetItem) => {
+        tooltip.transition().duration(200).style('opacity', 1);
+        tooltip
+          .html(
+            `
+          ${d.Name} : ${d.Nationality}
+          </br>
+          Year: ${d.Year}, Time: ${d.Time}
+          </br></br>
+          ${d.Doping}
+         `
+          )
+          .style('left', `${event.pageX + 5}px`)
+          .style('top', `${event.pageY - 25}px`);
+        tooltip.attr('data-year', d.Year);
+      })
+      .on('mouseout', (d: DatasetItem) => {
+        tooltip.transition().duration(500).style('opacity', 0);
+      });
   }
 
   getMaxTime(times: string[]) {
