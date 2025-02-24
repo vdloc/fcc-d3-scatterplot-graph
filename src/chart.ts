@@ -3,15 +3,16 @@ import {
   ChartAxis,
   ChartMargin,
   ChartOptions,
-  ChartScale,
+  ChartLinearScale,
   ChartSvg,
   IScatterPlotChart,
+  ChartTimeScale,
 } from './types';
 
 import { select, selectAll } from 'd3-selection';
-import { scaleLinear, NumberValue } from 'd3-scale';
+import { scaleLinear, NumberValue, scaleTime } from 'd3-scale';
 import { axisLeft, axisBottom } from 'd3-axis';
-import { extent } from 'd3';
+import { extent, timeFormat } from 'd3';
 
 export class ScatterPlotChart implements IScatterPlotChart {
   title: string;
@@ -24,8 +25,8 @@ export class ScatterPlotChart implements IScatterPlotChart {
   svg: ChartSvg;
   dataUrl: string;
   dataset: DatasetItem[] = [];
-  xScale: ChartScale | null;
-  yScale: ChartScale | null;
+  xScale: ChartLinearScale | null;
+  yScale: ChartTimeScale | null;
   xAxis: ChartAxis | null;
   yAxis: ChartAxis | null;
 
@@ -70,6 +71,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
 
   async init() {
     this.dataset = await this.getDataset();
+    this.updateDataset();
     this.svg = select(this.chartElement)
       .append('svg')
       .attr('width', this.width)
@@ -99,11 +101,11 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.xScale = scaleLinear()
       .domain([xRange[0] - 1, xRange[1]])
       .range([this.margin.left, this.width - this.margin.right]);
-    this.yScale = scaleLinear()
+    this.yScale = scaleTime()
       .domain(
-        extent(this.dataset, (d: DatasetItem) =>
-          this.getTimeInSeconds(d.Time)
-        ) as [number, number]
+        extent(this.dataset, (d: DatasetItem) => {
+          return d.Time;
+        }) as unknown as [number, number]
       )
       .range([this.margin.top * 1.2, this.height - this.margin.bottom]);
 
@@ -118,16 +120,17 @@ export class ScatterPlotChart implements IScatterPlotChart {
         return year;
       }
     );
-    this.yAxis = axisLeft(this.yScale).tickFormat(
-      (d: NumberValue, index: number) => {
-        const value = d as number;
-        const minutes = Math.floor(value / 60);
-        const seconds = new Intl.NumberFormat('en-US', {
-          minimumIntegerDigits: 2,
-        }).format(value % 60);
-        return `${minutes}:${seconds}`;
+    this.yAxis = axisLeft(this.yScale).tickFormat((value) => {
+      // Check if the value is a Date
+      if (value instanceof Date) {
+        return timeFormat('%M:%S')(value);
       }
-    );
+
+      // If the value is a number, convert it to a Date, assuming it's a timestamp
+      const date = new Date(value.valueOf());
+
+      return timeFormat('%M:%S')(date);
+    });
     this.svg
       ?.append('g')
       .attr('id', 'x-axis')
@@ -149,11 +152,11 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .enter()
       .append('circle')
       .attr('cx', (d) => (this.xScale ? this.xScale(d.Year) : d.Year))
-      .attr('cy', (d) =>
-        this.yScale
-          ? this.yScale(this.getTimeInSeconds(d.Time))
-          : this.getTimeInSeconds(d.Time)
-      )
+      .attr('cy', (d) => {
+        return this.yScale
+          ? this.yScale(d.Time)
+          : new Date(d.Time).getMinutes();
+      })
       .attr('r', 7)
       .attr('fill', (d) =>
         d.Doping
@@ -165,7 +168,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .attr('stroke-width', 1)
       .attr('data-xvalue', (d) => d.Year)
       ?.attr('data-yvalue', (d) => {
-        return new Date(d.Time).getMinutes();
+        return new Date(d.Time).toUTCString();
       })
       .attr('class', 'dot')
       .on('mouseenter', (event: MouseEvent, d: DatasetItem) => {
@@ -240,6 +243,22 @@ export class ScatterPlotChart implements IScatterPlotChart {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
+  }
+
+  updateDataset() {
+    this.dataset.forEach((d: DatasetItem) => {
+      const timeString = d.Time as unknown as string;
+      const timeFormat = timeString.split(':');
+      const time = new Date(
+        1970,
+        0,
+        1,
+        0,
+        Number(timeFormat[0]),
+        Number(timeFormat[1])
+      );
+      d.Time = time;
+    });
   }
 
   getTimeInSeconds(time: string) {

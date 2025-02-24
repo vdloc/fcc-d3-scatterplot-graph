@@ -1,5 +1,5 @@
 import { Selection } from 'd3-selection';
-import { ScaleLinear, NumberValue } from 'd3-scale';
+import { ScaleLinear, NumberValue, ScaleTime } from 'd3-scale';
 import { Axis } from 'd3-axis';
 
 export type ChartOptions = {
@@ -24,11 +24,12 @@ export type ChartSvg = Selection<
   null,
   undefined
 > | null;
-export type ChartScale = ScaleLinear<number, number>;
+export type ChartLinearScale = ScaleLinear<number, number>;
+export type ChartTimeScale = ScaleTime<number, number>;
 export type ChartAxis = Axis<NumberValue> | null;
 
 export type DatasetItem = {
-  Time: string;
+  Time: Date;
   Place: number;
   Seconds: number;
   Name: string;
