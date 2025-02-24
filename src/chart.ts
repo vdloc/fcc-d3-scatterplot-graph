@@ -29,6 +29,16 @@ export class ScatterPlotChart implements IScatterPlotChart {
   xAxis: ChartAxis | null;
   yAxis: ChartAxis | null;
 
+  legends = {
+    noAllegations: {
+      label: 'No doping allegations',
+      color: 'orange',
+    },
+    allegations: {
+      label: 'Riders with doping allegations',
+      color: 'steelblue',
+    },
+  };
   constructor({
     title,
     description,
@@ -67,6 +77,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.createTitle();
     this.createAxes();
     this.createPlots();
+    this.createLegend();
   }
 
   createTitle() {
@@ -96,7 +107,15 @@ export class ScatterPlotChart implements IScatterPlotChart {
       )
       .range([this.margin.top * 1.2, this.height - this.margin.bottom]);
 
-    this.xAxis = axisBottom(this.xScale);
+    this.xAxis = axisBottom(this.xScale).tickFormat(
+      (d: NumberValue, index: number) => {
+        const value = d as number;
+        const year = new Intl.DateTimeFormat('en-US', {
+          year: 'numeric',
+        }).format(value);
+        return year;
+      }
+    );
     this.yAxis = axisLeft(this.yScale).tickFormat(
       (d: NumberValue, index: number) => {
         const value = d as number;
@@ -134,7 +153,11 @@ export class ScatterPlotChart implements IScatterPlotChart {
           : this.getTimeInSeconds(d.Time)
       )
       .attr('r', 7)
-      .attr('fill', (d) => (d.Doping ? 'steelblue' : 'orange'))
+      .attr('fill', (d) =>
+        d.Doping
+          ? this.legends.allegations.color
+          : this.legends.noAllegations.color
+      )
       .attr('opacity', 0.8)
       .attr('stroke', 'black')
       .attr('stroke-width', 1)
@@ -162,6 +185,34 @@ export class ScatterPlotChart implements IScatterPlotChart {
       .on('mouseout', (d: DatasetItem) => {
         tooltip.transition().duration(500).style('opacity', 0);
       });
+  }
+
+  createLegend() {
+    const legend = this.svg
+      ?.append('g')
+      .attr('id', 'legend')
+      .attr('width', 300)
+      .attr(
+        'transform',
+        `translate(${this.width - this.margin.right}, ${this.height / 2})`
+      );
+
+    Object.values(this.legends).forEach((data, index) => {
+      legend
+        ?.append('text')
+        .attr('x', 0)
+        .attr('y', index * 25 + 12)
+        .attr('text-anchor', 'end')
+        .text(data.label)
+        .style('font-size', '13px');
+      legend
+        ?.append('rect')
+        .attr('x', 10)
+        .attr('y', index * 25)
+        .attr('width', 20)
+        .attr('height', 20)
+        .attr('fill', data.color);
+    });
   }
 
   getMaxTime(times: string[]) {
