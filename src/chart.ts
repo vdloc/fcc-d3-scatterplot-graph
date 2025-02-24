@@ -110,9 +110,11 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.xAxis = axisBottom(this.xScale).tickFormat(
       (d: NumberValue, index: number) => {
         const value = d as number;
+        const date = new Date();
+        date.setFullYear(value);
         const year = new Intl.DateTimeFormat('en-US', {
           year: 'numeric',
-        }).format(value);
+        }).format(date);
         return year;
       }
     );
