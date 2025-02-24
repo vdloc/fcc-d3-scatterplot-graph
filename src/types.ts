@@ -50,8 +50,8 @@ export interface IScatterPlotChart extends ChartOptions {
   svg: ChartSvg;
   dataUrl: string;
   dataset: DatasetItem[];
-  xScale: ChartScale | null;
-  yScale: ChartScale | null;
+  xScale: ChartLinearScale | null;
+  yScale: ChartTimeScale | null;
   xAxis: ChartAxis | null;
   yAxis: ChartAxis | null;
 }

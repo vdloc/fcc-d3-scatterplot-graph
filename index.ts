@@ -1,5 +1,5 @@
-import { ScatterPlotChart } from './chart';
-import '../style.css';
+import { ScatterPlotChart } from './src/chart';
+import './style.css';
 
 const chart = new ScatterPlotChart({
   title: 'Doping in Professional Bicycle Racing',
