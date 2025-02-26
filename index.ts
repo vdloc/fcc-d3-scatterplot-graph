@@ -9,4 +9,5 @@ const chart = new ScatterPlotChart({
   spacing: 60,
   chartElement: document.getElementById('chart'),
 });
+
 chart.init();

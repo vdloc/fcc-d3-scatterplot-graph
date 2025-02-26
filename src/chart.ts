@@ -54,7 +54,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.height = height;
     this.spacing = spacing;
     this.margin = {
-      top: spacing,
+      top: spacing * 2,
       right: spacing,
       bottom: spacing,
       left: spacing,
@@ -71,6 +71,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
 
   async init() {
     this.dataset = await this.getDataset();
+    console.log(' dataset:', this.dataset);
     this.updateDataset();
     this.svg = select(this.chartElement)
       .append('svg')
@@ -86,11 +87,18 @@ export class ScatterPlotChart implements IScatterPlotChart {
     this.svg
       ?.append('text')
       .attr('x', this.width / 2)
-      .attr('y', this.margin.top)
+      .attr('y', this.margin.top / 2)
       .attr('id', 'title')
       .attr('class', 'chart-title')
       .attr('text-anchor', 'middle')
       .text(this.title);
+    this.svg
+      ?.append('text')
+      .attr('x', this.width / 2)
+      .attr('y', this.margin.top / 2 + 30)
+      .attr('class', 'chart-description')
+      .attr('text-anchor', 'middle')
+      .text(this.description);
   }
 
   createAxes() {
@@ -178,7 +186,7 @@ export class ScatterPlotChart implements IScatterPlotChart {
             `
           ${d.Name} : ${d.Nationality}
           </br>
-          Year: ${d.Year}, Time: ${d.Time}
+          Year: ${d.Year}, Time: ${timeFormat('%M:%S')(new Date(d.Time))}
           </br></br>
           ${d.Doping}
          `

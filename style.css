@@ -11,6 +11,7 @@ body {
   display: grid;
   align-items: center;
   justify-content: center;
+  min-height: 100vh;
 }
 
 .chart-title {
@@ -20,8 +21,13 @@ body {
 #tooltip {
   position: absolute;
   border-radius: 4px;
-  background-color: rgba(59, 155, 158, 0.7);
+  background-color: rgba(59, 155, 158);
   padding: 8px;
   font-size: 0.8rem;
   z-index: 99;
+  cursor: pointer;
+}
+
+.dot {
+  cursor: pointer;
 }
